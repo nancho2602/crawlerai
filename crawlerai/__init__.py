@@ -1,5 +1,5 @@
-"""Public API for crawlerai."""
+"""crawlerai API exposing the FastAPI ``app``."""
 
-from .crawler import crawl, extract_links_from_sitemap, generate_report
+from .api import app, crawl_sitemap, process_result_with_llm, CrawlResponse
 
-__all__ = ["crawl", "extract_links_from_sitemap", "generate_report"]
+__all__ = ["app", "crawl_sitemap", "process_result_with_llm", "CrawlResponse"]

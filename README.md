@@ -1,17 +1,24 @@
 # crawlerai
 
-A simple site crawler that can collect pages from a sitemap or by walking links
-starting from a homepage. Each page's text content is stored in a JSON file.
-When the optional `--report` flag is supplied the crawler will attempt to
-generate a marketing and SEO report for each page using a HuggingFace
-`transformers` text-generation pipeline (for example `google/gemma-2b-it`).
+A FastAPI service that crawls a site's pages from a provided sitemap and
+summarises each page using a local LLM when available. The crawling logic uses
+`crawl4ai` while text summaries are generated with `google.generativeai`.
 
-## Usage
+## Running
+
+Install the optional dependencies and run the server with `uvicorn`:
 
 ```bash
-python -m crawlerai.crawler https://example.com --limit 10 --output site.json
+pip install crawl4ai google-generativeai python-dotenv fastapi uvicorn
+uvicorn crawlerai.api:app --reload
 ```
 
-Use the `--sitemap` flag if the URL points directly to a sitemap file. Pass
-`--report` to generate a report with a local model. The `transformers` package
-and the chosen model weights must be installed separately.
+Send a POST request to `/crawl` with a raw sitemap XML in the body:
+
+```bash
+curl -X POST http://localhost:8000/crawl \
+     -H 'Content-Type: application/json' \
+     -d '{"sitemap_xml": "<urlset>...</urlset>"}'
+```
+
+The response contains a list of pages with an optional LLM summary.
