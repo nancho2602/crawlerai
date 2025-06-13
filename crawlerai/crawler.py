@@ -4,7 +4,7 @@ from collections import deque
 from html.parser import HTMLParser
 from typing import Dict, Iterable, List, Set
 from urllib.parse import urljoin, urlparse
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
 
@@ -23,7 +23,9 @@ class TextExtractor(HTMLParser):
 
 
 def _fetch(url: str) -> str:
-    with urlopen(url, timeout=10) as resp:
+    """Retrieve the raw HTML for ``url`` using a browser-like user agent."""
+    req = Request(url, headers={"User-Agent": "Mozilla/5.0 crawlerai"})
+    with urlopen(req, timeout=10) as resp:
         return resp.read().decode("utf-8", errors="ignore")
 
 
@@ -85,9 +87,18 @@ PROMPT_TEMPLATE = (
 
 
 def generate_report(text: str, model_name: str = "google/gemma-2b-it") -> str:
-    raise NotImplementedError(
-        "LLM support requires the transformers package and model weights to be available"
-    )
+    """Generate an SEO report for ``text`` using a HuggingFace text-generation model."""
+    try:
+        from transformers import pipeline  # type: ignore[import-not-found]
+    except Exception as exc:  # pragma: no cover - depends on optional package
+        raise RuntimeError(
+            "transformers package is required for report generation"
+        ) from exc
+
+    generator = pipeline("text-generation", model=model_name)
+    prompt = PROMPT_TEMPLATE.format(content=text)
+    result = generator(prompt, max_new_tokens=200, do_sample=False)
+    return result[0]["generated_text"]
 
 
 def main(argv: Iterable[str] | None = None) -> None:
